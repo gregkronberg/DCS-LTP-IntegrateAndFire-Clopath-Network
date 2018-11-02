@@ -35,7 +35,14 @@ class AdexBonoClopath:
                 B =  1/(1 + exp(-0.062*u/mV)/3.57) : 1 
                 I_nmda = -g_nmda*B*(u-E_nmda) : amp
 
-                I_syn = I_ampa + I_nmda : amp
+            # gaba
+            #````````````````````````````
+                dg_gaba/dt = -g_gaba/t_gaba : siemens
+                I_gaba = -g_gaba*(u-E_gaba) : amp
+
+            # total synaptic current
+            #```````````````````````````````
+            I_syn = I_ampa + I_nmda + I_gaba: amp
 
             # clopath
             #```````````````````
@@ -97,6 +104,16 @@ class AdexBonoClopath:
             # E_ampa : volt
             '''
 
+        self.syn_gaba = '''
+            w_gaba:1
+            
+        '''
+
+        self.syn_gaba_pre = '''
+            g_gaba += int(update_gaba_online)*w_vogels*g_max_gaba*A + int(1-update_gaba_online)*w_gaba*g_max_ampa*A 
+            
+        '''
+
         self.syn_ampa_pre = '''
             g_ampa += int(update_ampa_online)*w_clopath*g_max_ampa*A + int(1-update_ampa_online)*w_ampa*g_max_ampa*A 
             '''
@@ -133,6 +150,24 @@ class AdexBonoClopath:
             D3 *= d3 
             '''
 
+        # vogels inhibitory plasticity rule
+        #````````````````````````````````````````````````````````````````````
+        self.syn_vogels = '''
+            w_vogels:1
+            dApre_vogels/dt = -Apre_vogels/tau_vogels : 1
+            dApost_vogels/dt = -Apost_vogels/tau_vogels : 1
+        '''
+
+        self.syn_vogels_pre = '''
+            Apre_vogels += 1
+            w_vogels = clip(w_vogels+(Apost_vogels-alpha_vogels)*eta_vogels, 0, w_max_vogels)
+            '''
+
+        self.syn_vogels_post = '''
+            Apost_vogels += 1
+            w_vogels = clip(w_vogels+Apre_vogels*eta_vogels, 0, w_max_vogels)
+        '''
+
         # clopath plasticity rule
         #''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
         self.syn_clopath = '''      
@@ -158,9 +193,15 @@ class AdexBonoClopath:
             x_trace += dt*x_reset/tau_x  # update presynaptic trace with each input
             '''
 
-        self.synapse = _add_eq(self.syn_ampa, self.syn_nmda, self.syn_stp, self.syn_clopath)
+        self.synapse_e = _add_eq(self.syn_ampa, self.syn_nmda, self.syn_stp, self.syn_clopath)
 
-        self.synapse_pre = _add_eq(self.syn_ampa_pre, self.syn_nmda_pre, self.syn_stp_pre, self.syn_clopath_pre)
+        self.synapse_i = _add_eq(self.syn_gaba)
+
+        self.synapse_e_pre = _add_eq(self.syn_ampa_pre, self.syn_nmda_pre, self.syn_stp_pre, self.syn_clopath_pre)
+
+        self.synapse_i_pre = _add_eq(self.syn_gaba_pre, self.syn_vogels_pre)
+
+        self.synapse_i_post = _add_eq(self.syn_vogels_post)
     
 
 def _add_eq(*list_args):

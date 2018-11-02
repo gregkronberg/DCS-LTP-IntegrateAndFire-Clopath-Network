@@ -32,7 +32,7 @@ class Default:
 
             # variables to record
             #================================================================
-            'rec_variables_neuron':['u','A_LTD_homeo', 'I_nmda'],
+            'rec_variables_neuron':['u','A_LTD_homeo', 'I_nmda', 'I_gaba'],
             'rec_variables_syn': ['w_clopath', 'x_trace', ],
         }
 
@@ -64,24 +64,30 @@ class Default:
             't_reset':0.5*ms, # time constant for resetting voltage after holding spike (should be equal to dt)
             'hold_spike':1,
 
-            'rec_variables': ['u','A_LTD_homeo', 'I_nmda'],
+            'rec_variables': ['u','A_LTD_homeo', 'I_nmda', 'I_gaba'],
 
             # synapse parameters
             #====================================================================
             # ampa
             #''''''''''''''''''''
 
-            'g_max_ampa' :100*nS,
+            'g_max_ampa' :50*nS,
             't_ampa' : 2*ms,
             'E_ampa' : 0*mV,
             # 'w_ampa' : 0.2,
 
             # nmda
             #''''''''''''''''''''''
-            'g_max_nmda' : 50*nS, #g_max_ampa/2, #75*nS
+            'g_max_nmda' : 25*nS, #g_max_ampa/2, #75*nS
             't_nmda' : 50*ms,
             'E_nmda' : 0*mV,
             # 'w_nmda' : 0.5,
+
+            # gaba
+            #```````````````````````
+            'g_max_gaba' : 30*nS,
+            't_gaba' : 10*ms,
+            'E_gaba' : -80*mV,
 
             # clopath
             #'''''''''''''''''''''''''
@@ -100,24 +106,39 @@ class Default:
 
         self.synapses['1'] = {
             'update_ampa_online':0,
-            'update_nmda_online':0,   
+            'update_nmda_online':0,  
+            'updata_gaba_online':0,
 
             # synapse parameters
             #====================================================================
             # ampa
             #''''''''''''''''''''
 
-            'g_max_ampa' :100*nS,
+            'g_max_ampa' :50*nS,
             't_ampa' : 2*ms,
             'E_ampa' : 0*mV,
             # 'w_ampa' : 0.2,
 
             # nmda
             #''''''''''''''''''''''
-            'g_max_nmda' : 50*nS, #g_max_ampa/2, #75*nS
+            'g_max_nmda' : 25*nS, #g_max_ampa/2, #75*nS
             't_nmda' : 50*ms,
             'E_nmda' : 0*mV,
             # 'w_nmda' : 0.5,
+
+            # gaba
+            #```````````````````````
+            'g_max_gaba' : 30*nS,
+            't_gaba' : 10*ms,
+            'E_gaba' : -80*mV,
+
+            # vogels
+            #`````````````````````````
+            'tau_vogels':20*ms,
+            'eta_vogels':.0001,
+            'alpha_vogels':0.12,
+            'w_max_vogels':2,
+
 
             # short term plasticity
             #'''''''''''''''''''''''
@@ -133,8 +154,8 @@ class Default:
             # clopath
             #'''''''''''''''''''''''''
             'v_target' : 100*mV*mV,
-            'A_LTD' : 50*100E-5,
-            'A_LTP' : 50*40E-5/ms,
+            'A_LTD' : 100E-5,
+            'A_LTP' : 40E-5/ms,
             'tau_lowpass2' : 5*ms,
             'tau_x' : 10*ms,
             'tau_lowpass1' : 6*ms,
@@ -188,9 +209,11 @@ class Default:
         'u_lowpass1':self.neurons['1']['E_L'],
         'u_lowpass2':self.neurons['1']['E_L'],
         'u_homeo':0*mV,
-        'w_clopath':0.5,
-        'w_ampa':0.5, 
-        'w_nmda':0.2,
+        'w_clopath':1,
+        'w_vogels':0,
+        'w_ampa':1, 
+        'w_nmda':1,
+        'w_gaba': 1,
         }
 
 
@@ -267,14 +290,14 @@ class Param:
             # ampa
             #''''''''''''''''''''
 
-            'g_max_ampa' :100*nS,
+            'g_max_ampa' :50*nS,
             't_ampa' : 2*ms,
             'E_ampa' : 0*mV,
             'w_ampa' : 0.2,
 
             # nmda
             #''''''''''''''''''''''
-            'g_max_nmda' : 50*nS, #g_max_ampa/2, #75*nS
+            'g_max_nmda' : 25*nS, #g_max_ampa/2, #75*nS
             't_nmda' : 50*ms,
             'E_nmda' : 0*mV,
             'w_nmda' : 0.5,

@@ -2,8 +2,18 @@ from brian2 import *
 import numpy as np
 import pandas as pd
 from scipy import stats
-import clopath
 import copy
+
+
+def _plot_all(group_dataframe, variable):
+    '''
+    '''
+    gf = group_dataframe[variable]
+    plt.figure()
+    plt.plot(np.array(gf.data[gf.field_mag==0].tolist()).T, color='black')
+    plt.plot(np.array(gf.data[gf.field_mag>0].tolist()).T, color='red')
+    plt.show(block=False)
+
 
 class Plot:
     '''

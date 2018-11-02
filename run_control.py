@@ -10,11 +10,13 @@ def _set_initial_conditions(brian_object, init_dic):
     if isinstance(brian_object, dict):
         for group_key, group in brian_object.iteritems():
             for param, val in init_dic[group_key].iteritems():
-                setattr(brian_object[group_key], param, val)
+                if hasattr(brian_object[group_key], param):
+                    setattr(brian_object[group_key], param, val)
 
     else:
         for param, val in init_dic[group_key].iteritems():
-            setattr(brian_object, param, val)
+            if hasattr(brian_object, param):
+                setattr(brian_object, param, val)
 
 def _collect_brian_objects(net, *dics):
     '''
@@ -24,6 +26,68 @@ def _collect_brian_objects(net, *dics):
             net.add(object_container[group_key])
 
     return net
+
+def _rec2dict(rec):
+    '''
+    '''
+
+def _rec2dict(rec, P):
+    '''
+    '''
+    init_dict = {
+    'data':[],
+    'index':[],
+    'pre_index':[],
+    'post_index':[],
+    'brian_group_name':[],
+    'group_name':[],
+    'trial_id':[],
+    'P':[],
+    'field':[],
+    }
+    group_dict = {}
+    # iterate over type of recorded object
+    for group_type_key, group_type in rec.iteritems():
+        group_dict[group_type_key] = {}
+        # iterate over groups
+        for group_key, group in group_type.iteritems():
+
+            for var in group.record_variables:
+                if var not in group_dict[group_type_key]:
+                    group_dict[group_type_key][var]=init_dict
+
+
+
+
+                group_dict[group_type_key][var]['data'].append(getattr(group, var))
+
+                group_dict[group_type_key][var]['index'].append(group.record)
+
+                if group_type_key == 'synapses':
+                    pre_index = group.source.i
+                    post_index = group.source.j
+                else:
+                    pre_index = []
+                    post_index = []
+
+                group_dict[group_type_key][var]['pre_index'].append(pre_index)
+                group_dict[group_type_key][var]['pre_index'].append(post_index)
+
+                group_dict[group_type_key][var]['brian_group_name'].append(group.source.name)
+
+                group_dict[group_type_key][var]['group_name'].append(group_key)
+
+                group_dict[group_type_key][var]['trial_id'].append(P.simulation['trial_id'])
+                group_dict[group_type_key][var]['P'].append(P)
+
+                group_dict[group_type_key][var]['field_mag'].append(P.simulation['field_mag'])
+
+
+
+
+                
+
+
 
 
 def _monitor_to_dataframe(mon, P):
