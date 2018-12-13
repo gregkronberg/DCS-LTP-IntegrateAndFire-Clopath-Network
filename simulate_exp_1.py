@@ -66,6 +66,7 @@ for obj_type, obj in rec.iteritems():
 # set up network
 #======================================================================
 net = Network()
+# collect brian objects into a network (if brian objects are stored in other namespaces, they will not be recognized by brian)
 net = run_control._collect_brian_objects(net, input_path, neurons, synapses, rec['neurons'], rec['synapses'])
 
 # run simulation
@@ -94,6 +95,8 @@ for trial in range(P.simulation['trials']):
 		net.restore('randomized')
 		neurons['1'].I_field= field
 		net.run(P.simulation['run_time'])
+		data_df = analysis._rec2df(rec=rec, P=P)
+		group_df = group_df.append(data_df, ignore_index=True)
 		data_dict = analysis._rec2dict(rec=rec, P=P)
 		group_dict = analysis._add_to_group_data(group_data=group_dict, data_dict=data_dict)
 

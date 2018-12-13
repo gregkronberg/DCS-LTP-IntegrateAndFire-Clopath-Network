@@ -4,6 +4,32 @@ import pandas as pd
 from scipy import stats
 import copy
 
+
+def _build_state_rec(brian_objects, keys, P):
+    '''
+    '''
+    # zipped_objects = zip(keys, brian_objects)
+    rec={}
+    for i, key in enumerate(keys):
+        rec[key] = {}
+        for group_key, group in brian_objects[i].iteritems():
+            brian_object = group
+            rec[key][group_key] = StateMonitor(brian_object, P.__dict__[key][group_key]['rec_variables'], record=P.__dict__[key][group_key]['rec_indices'])
+    return rec
+
+    # rec = {}
+    # for key in keys:
+    #     rec[key]={}
+
+    # # iterate over object types (neurons or synapses)
+    # for obj_type, obj in rec.iteritems():
+    #     # iterate over group
+    #     for group_key, group in globals()[obj_type].iteritems():
+    #         # get underlying brian object
+    #         brian_object = globals()[obj_type][group_key]
+    #         # setup state monitor
+    #         rec[obj_type][group_key] = StateMonitor(brian_object, P.__dict__[obj_type][group_key]['rec_variables'], record=True)
+
 def _set_initial_conditions(brian_object, init_dic):
     '''
     '''

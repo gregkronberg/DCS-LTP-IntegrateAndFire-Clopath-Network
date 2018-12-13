@@ -65,6 +65,7 @@ class Default:
             'hold_spike':1,
 
             'rec_variables': ['u','A_LTD_homeo', 'I_nmda', 'I_gaba'],
+            'rec_indices': True,
 
             # synapse parameters
             #====================================================================
@@ -169,6 +170,7 @@ class Default:
             #'''''''''''''''''''''''''''
             'connect_condition':'i==1',
             'rec_variables': ['w_clopath', 'x_trace', ],
+            'rec_indices': True,
         }
 
         self.input['1'] = {
@@ -182,7 +184,8 @@ class Default:
 
             'I_input':0*pA,
 
-            'rec_variables':[]
+            'rec_variables':[],
+            'rec_indices':True
 
         }
 
