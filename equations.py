@@ -63,7 +63,7 @@ class AdexBonoClopath:
 
             # homeostatic depression amplitude
                 #``````````````````````````````````
-                A_LTD_homeo = A_LTD*(u_homeo**2/v_target) : 1  
+                A_LTD_homeo = int(1-include_homeostatic) + int(include_homeostatic)*A_LTD*(u_homeo**2/v_target) : 1  
             
             # parameters
             #```````````````

@@ -53,10 +53,6 @@ def _collect_brian_objects(net, *dics):
 
     return net
 
-def _rec2dict(rec):
-    '''
-    '''
-
 def _rec2dict(rec, P):
     '''
     '''
@@ -107,14 +103,6 @@ def _rec2dict(rec, P):
                 group_dict[group_type_key][var]['P'].append(P)
 
                 group_dict[group_type_key][var]['field_mag'].append(P.simulation['field_mag'])
-
-
-
-
-                
-
-
-
 
 def _monitor_to_dataframe(mon, P):
     '''

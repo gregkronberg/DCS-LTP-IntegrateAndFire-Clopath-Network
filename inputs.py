@@ -43,5 +43,15 @@ def _tbs(p):
             time = warmup + 1000*burst/burst_freq + 1000*pulse/pulse_freq
             input_times[cnt] = time
 
-    input_group = SpikeGeneratorGroup(1, indices, input_times*ms)
+    print p['name']
+    input_group = SpikeGeneratorGroup(1, indices, input_times*ms, name=p['name'])
+    print input_group.name
     return input_group
+
+def _poisson(p):
+    '''
+    '''
+    if 'n_poisson' in p:
+        N = p['n_poisson']
+
+    input_group = PoissonGroup(N, p['poisson_rate'])

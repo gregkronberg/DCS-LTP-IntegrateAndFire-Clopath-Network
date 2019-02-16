@@ -63,6 +63,90 @@ def _load_group_data(directory='', file_name='', df=True):
 
     return group_data 
 
+def _rec2df_multi(rec, P):
+    ''' convert recording objects from brian into pandas dataframe
+
+    ==Args==
+    -rec : recording structure containing brian objects.  organized as rec{group_type}{group}.brian_state_monitors.  e.g. rec{'neurons'}{'1'}.u
+    -P : parameter object with attributes
+            ~simulation, neurons, synapses, input, network, init_neurons, init_synapses
+            ~each attribute is a dictionary of groups.  e.g. P.neurons['1'] contains parameters for neuron group 1
+
+    ==Out==
+    -df : pandas dataframe with hierarchical multiindexing, with level 0 specifying the variable that was recorded ('u', 'w', 'I_nmda') and level 1 specifying the type of data/info ('data', 'trial_id', 'field_mag')  
+    
+    ==Updates==
+    
+    ==Comments==
+    -all entries in df are stored as numpy arrays
+    -df cannot directly store brian objects, as they cannot be pickled and saved (this may be related to brian objects that are not in the top level namespace. see answers here: https://stackoverflow.com/questions/8804830/python-multiprocessing-pickling-error)
+    '''
+    P = copy.deepcopy(P)
+    group_data={}
+    # iterate over type of recorded object
+    for group_type_key, group_type in rec.iteritems():
+        # if group_type_key not in group_data:
+        #     group_data[group_type_key] = {}
+        # iterate over groups
+        for group_key, group in group_type.iteritems():
+
+            # iterate over recorded variables
+            for var in group.record_variables:
+                
+                # numpy array 
+                data_array = getattr(group, var)
+                n = data_array.shape[0]
+
+                if group_type_key == 'synapses':
+                    pre_index = np.array(group.source.i)
+                    pre_group_name = group.source.source.name
+                    post_index = np.array(group.source.j)
+                    post_group_name = group.source.target.name
+                else:
+                    pre_index = np.array([np.nan]*n)
+                    post_index = np.array([np.nan]*n)
+                    pre_group_name = np.array([np.nan]*n)
+                    post_group_name = np.array([np.nan]*n)
+
+                # numpy array of recorded data (recorded objects x time)
+                group_data[(var,group_key,'data', )]=data_array,
+
+                # index of recorded objects in brian space
+                group_data[(var,group_key,'brian_index',)]=group.record,
+
+                # indices of pre and post synaptic neurons (for synapses only, nan's are entered otherwise)
+                group_data[(var,group_key,'pre_index', )]=pre_index,
+                group_data[(var,group_key,'post_index', )]=post_index,
+
+                # indices of pre and post synaptic neurons (for synapses only, nan's are entered otherwise)
+                group_data[(var,group_key,'pre_brian_group_name', )]=pre_group_name,
+                group_data[(var,group_key,'post_brian_group_name', )]=post_group_name,
+
+                # name of brian object
+                group_data[(var,group_key,'brian_group_name', )]=np.array([group.source.name]*n),
+                
+                # name of object in higher level namespace
+                # group_data[(var,group_key,'group_name', )]=np.array([group_key]*n),
+
+                # unique trial identifier
+                group_data[(var,group_key,'trial_id',)]=np.array([P.simulation['trial_id']]*n),
+
+                # parameter dictionary objects
+                group_data[(var,group_key,'P', )]=np.array([P]*n),
+
+                # electric field magnitude
+                group_data[(var,group_key,'field_mag', )]=np.array([P.simulation['field_mag']]*n),
+
+                group_data[(var,group_key,'field_polarity', )]=np.array([P.simulation['field_polarity']]*n),
+
+    df = pd.DataFrame(group_data)
+
+    column_index = df.columns.set_names(['variable', 'group_name', 'dtype'])
+
+    df = df.T.set_index(column_index).T
+
+    return df
+
 def _rec2df(rec, P):
     ''' convert recording objects from brian into pandas dataframe
 
@@ -81,7 +165,8 @@ def _rec2df(rec, P):
     -all entries in df are stored as numpy arrays
     -df cannot directly store brian objects, as they cannot be pickled and saved (this may be related to brian objects that are not in the top level namespace. see answers here: https://stackoverflow.com/questions/8804830/python-multiprocessing-pickling-error)
     '''
-    group_data={}
+    P = copy.deepcopy(P)
+    df=pd.DataFrame()
     # iterate over type of recorded object
     for group_type_key, group_type in rec.iteritems():
         # if group_type_key not in group_data:
@@ -91,44 +176,70 @@ def _rec2df(rec, P):
 
             # iterate over recorded variables
             for var in group.record_variables:
-                
+        
+                current_dict={}
                 # numpy array 
                 data_array = getattr(group, var)
                 n = data_array.shape[0]
 
                 if group_type_key == 'synapses':
                     pre_index = np.array(group.source.i)
+                    pre_group_name = group.source.source.name
                     post_index = np.array(group.source.j)
+                    post_group_name = group.source.target.name
                 else:
                     pre_index = np.array([np.nan]*n)
                     post_index = np.array([np.nan]*n)
+                    pre_group_name = np.nan
+                    post_group_name =np.nan
+
+                current_dict['variable'] = var
 
                 # numpy array of recorded data (recorded objects x time)
-                group_data[(var,'data')]=data_array,
+                current_dict['data']=data_array,
 
                 # index of recorded objects in brian space
-                group_data[(var,'brian_index')]=group.record,
+                current_dict['brian_index']=group.record,
 
                 # indices of pre and post synaptic neurons (for synapses only, nan's are entered otherwise)
-                group_data[(var,'pre_index')]=pre_index,
-                group_data[(var,'post_index')]=post_index,
+                current_dict['pre_index']=pre_index,
+                current_dict['post_index']=post_index,
+
+                # indices of pre and post synaptic neurons (for synapses only, nan's are entered otherwise)
+                current_dict['pre_brian_group_name']=pre_group_name,
+                current_dict['post_brian_group_name']=post_group_name,
 
                 # name of brian object
-                group_data[(var,'brian_group_name')]=np.array([group.source.name]*n),
+                current_dict['brian_group_name']=group.source.name,
                 
                 # name of object in higher level namespace
-                group_data[(var,'group_name')]=np.array([group_key]*n),
+                current_dict['group_name']=group_key,
 
                 # unique trial identifier
-                group_data[(var,'trial_id')]=np.array([P.simulation['trial_id']]*n),
+                current_dict['trial_id']=P.simulation['trial_id'],
 
                 # parameter dictionary objects
-                group_data[(var,'P')]=np.array([P]*n),
+                current_dict['P']=P,
 
                 # electric field magnitude
-                group_data[(var,'field_mag')]=np.array([P.simulation['field_mag']]*n),
+                current_dict['field_mag']=P.simulation['field_mag'],
 
-    df = pd.DataFrame(group_data)
+                current_dict['field_polarity']=P.simulation['field_polarity'],
+
+                # convert to dataframe    
+                current_df = pd.DataFrame(current_dict)
+
+                # add to group data
+                if df.empty:
+                    df=current_df
+                else:
+                    df = df.append(current_df, ignore_index=True)
+
+    # df = pd.DataFrame(group_data)
+
+    # column_index = df.columns.set_names(['variable', 'group_name', 'dtype'])
+
+    # df = df.T.set_index(column_index).T
 
     return df
 
@@ -212,3 +323,11 @@ def _add_to_group_data(group_data, data_dict):
                 group_data[variable_key][data_key] = np.append(group_data[variable_key][data_key], data, axis=0)
 
     return group_data
+
+def _build_ltp_final(row):
+    '''
+    '''
+    ltp_final = row['data'][:,-1]/row['data'][:,0]
+
+    return ltp_final
+

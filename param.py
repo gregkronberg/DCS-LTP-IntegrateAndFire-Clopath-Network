@@ -7,9 +7,158 @@ from scipy import stats
 import copy
 
 prefs.codegen.target = 'numpy'
+class Clopath2010:
+    '''
+    '''
+    def __init__(self, ):
+        '''
+        '''
+        self.neurons={'1':{}}
+        self.synapses={'1':{}}
+        self.neurons['1'] = {
+            'N':1,
+            'E_L':-70.6*mV,
+            'g_L':30*nS,
+            'delta_T':2*mV,
+            'C':281*pF,
+            't_noise': 20*ms,
+            't_V_T':50*ms,
+            'refractory':2*ms,
+            'V_Trest': -50.4*mV,
+            'V_Tmax':30.4*mV,
+            'reset_condition':'u=-70*mV',
+            'threshold_condition':'u>V_T+20*mV',
+            'I_after' : 400*pA,
+            'a_adapt' : 4*nS,
+            'b_adapt' : 0.805*pA,
+            't_w_adapt' : 144*ms,
+            't_z_after' : 40*ms,
+            'u_reset' : -70.6*mV,
+            'I_input':0*pA,
+
+            'u_hold':30*mV,
+            'refractory_time':2*ms,
+            'spike_hold_time':1*ms, # must be at least 0.2 ms less than refractory time
+            'spike_hold_time2': 2*ms - 2*defaultclock.dt,
+            't_reset':0.5*ms, # time constant for resetting voltage after holding spike (should be equal to dt)
+            'hold_spike':1,
+
+            'rec_variables': ['u','A_LTD_homeo', 'I_nmda', 'I_gaba'],
+            'rec_indices': True,
+
+            # synapse parameters
+            #====================================================================
+            # ampa
+            #''''''''''''''''''''
+
+            'g_max_ampa' :50*nS,
+            't_ampa' : 2*ms,
+            'E_ampa' : 0*mV,
+            # 'w_ampa' : 0.2,
+
+            # nmda
+            #''''''''''''''''''''''
+            'g_max_nmda' : 25*nS, #g_max_ampa/2, #75*nS
+            't_nmda' : 50*ms,
+            'E_nmda' : 0*mV,
+            # 'w_nmda' : 0.5,
+
+            # gaba
+            #```````````````````````
+            'g_max_gaba' : 30*nS,
+            't_gaba' : 10*ms,
+            'E_gaba' : -80*mV,
+
+            # clopath
+            #'''''''''''''''''''''''''
+            'v_target' : 100*mV*mV,
+
+            # visual cortex parameters from clopath 2010 table 1b
+            'A_LTD' : 14E-5,#50*100E-5,
+            'A_LTP' : 8E-5/ms,#50*40E-5/ms,
+            'tau_lowpass2' : 7*ms,
+            'tau_x' : 15*ms,
+            'tau_lowpass1' : 10*ms,
+            'tau_homeo' : 1000*ms,
+            'theta_low' : -70.6*mV,
+            'theta_high' : -45.3*mV,
+            'w_max_clopath' : 2,
+            'x_reset':1,
+            'include_homeostatic':1, # include slow homeostatic property in clopath learning rule
+            }
+
+        self.synapses['1'] = {
+            'update_ampa_online':0,
+            'update_nmda_online':0,  
+            'updata_gaba_online':0,
+
+            # synapse parameters
+            #====================================================================
+            # ampa
+            #''''''''''''''''''''
+
+            'g_max_ampa' :50*nS,
+            't_ampa' : 2*ms,
+            'E_ampa' : 0*mV,
+            # 'w_ampa' : 0.2,
+
+            # nmda
+            #''''''''''''''''''''''
+            'g_max_nmda' : 25*nS, #g_max_ampa/2, #75*nS
+            't_nmda' : 50*ms,
+            'E_nmda' : 0*mV,
+            # 'w_nmda' : 0.5,
+
+            # gaba
+            #```````````````````````
+            'g_max_gaba' : 30*nS,
+            't_gaba' : 10*ms,
+            'E_gaba' : -80*mV,
+
+            # vogels
+            #`````````````````````````
+            'tau_vogels':20*ms,
+            'eta_vogels':.0001,
+            'alpha_vogels':0.12,
+            'w_max_vogels':2,
+
+
+            # short term plasticity
+            #'''''''''''''''''''''''
+            'f' : 5.3,
+            't_F' : 94*ms,
+            'd1' : 0.45,
+            't_D1' : 540*ms,
+            'd2' : 0.12,
+            't_D2' : 45*ms,
+            'd3' : 0.98,
+            't_D3' : 120E3*ms,
+
+            # clopath
+            #'''''''''''''''''''''''''
+            'v_target' : 100*mV*mV,
+            # visual cortex parameters from clopath 2010 table 1b
+            'A_LTD' : 14E-5,#50*100E-5,
+            'A_LTP' : 8E-5/ms,#50*40E-5/ms,
+            'tau_lowpass2' : 7*ms,
+            'tau_x' : 15*ms,
+            'tau_lowpass1' : 10*ms,
+            'tau_homeo' : 1000*ms,
+            'theta_low' : -70.6*mV,
+            'theta_high' :-45.3*mV,
+            'w_max_clopath' : 2,
+            'x_reset':1,
+            'include_homeostatic':1, # include slow homeostatic property in clopath learning rule
+
+            # connections
+            #'''''''''''''''''''''''''''
+            'connect_condition':'i==1',
+            'rec_variables': ['w_clopath', 'x_trace', ],
+            'rec_indices': True,
+        }
 
 class Default:
-    '''
+    ''' default parameters
     '''
     def __init__(self, ):
         '''
@@ -27,8 +176,8 @@ class Default:
             'dt':0.1*ms, 
             'run_time':300*ms,
             'field_mags': [5*20*pA, 0*pA, -5*20*pA],
-            'field_label':['anodal', 'control', 'cathodal'],
-            'field_color':['red','black','blue'],
+            'field_polarities':['anodal', 'control', 'cathodal'],
+            'field_colors':['red','black','blue'],
 
             # variables to record
             #================================================================
@@ -103,6 +252,7 @@ class Default:
             'theta_high' : -50*mV,
             'w_max_clopath' : 2,
             'x_reset':1,
+            'include_homeostatic':1, # include slow homeostatic property in clopath learning rule
         }
 
         self.synapses['1'] = {
@@ -165,6 +315,7 @@ class Default:
             'theta_high' : -50*mV,
             'w_max_clopath' : 2,
             'x_reset':1,
+            'include_homeostatic':1, # include slow homeostatic property in clopath learning rule
 
             # connections
             #'''''''''''''''''''''''''''

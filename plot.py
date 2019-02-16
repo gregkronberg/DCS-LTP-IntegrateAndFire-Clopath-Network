@@ -10,8 +10,30 @@ def _plot_all(group_dataframe, variable):
     '''
     gf = group_dataframe[variable]
     plt.figure()
-    plt.plot(np.array(gf.data[gf.field_mag==0].tolist()).T, color='black')
-    plt.plot(np.array(gf.data[gf.field_mag>0].tolist()).T, color='red')
+    plt.plot(np.array(gf.data[gf.field_mag==0].tolist()).squeeze().T, color='black')
+    plt.plot(np.array(gf.data[gf.field_mag>0].tolist()).squeeze().T, color='red')
+    plt.show(block=False)
+
+def _plot_mean(df, variable, group='1'):
+    '''
+    '''
+    df = df[variable][group]
+    control_array = np.array(df.data[df.field_mag==0].tolist()).squeeze().T
+    anodal_array = np.array(df.data[df.field_mag>0].tolist()).squeeze().T
+    control_mean = np.mean(control_array, axis=1)
+    anodal_mean = np.mean(anodal_array, axis=1)
+    control_std = np.std(control_array, axis=1)
+    anodal_std = np.std(anodal_array, axis=1)
+    control_sem = stats.sem(control_array, axis=1)
+    anodal_sem = stats.sem(anodal_array, axis=1)
+    t = np.arange(len(control_mean))
+    plt.figure()
+    plt.plot(control_mean, color='k')
+    plt.plot(anodal_mean, color='r')
+    plt.fill_between(t, control_mean-control_sem, control_mean+control_sem, color='k', alpha=0.8)
+    plt.fill_between(t, anodal_mean-anodal_sem, anodal_mean+anodal_sem, color='r', alpha=0.8)
+    # plt.plot(np.array(gf.data[gf.field_mag==0].tolist()).squeeze().T, color='black')
+    # plt.plot(np.array(gf.data[gf.field_mag>0].tolist()).squeeze().T, color='red')
     plt.show(block=False)
 
 
