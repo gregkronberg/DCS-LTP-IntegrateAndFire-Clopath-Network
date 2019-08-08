@@ -1166,7 +1166,140 @@ def _plot_var2var_correlation(df_sorted, figures, variables, colors, markers, ti
 
     plt.show(block=False)
 
+def _plot_trace_brian(df_sorted, figure_params, variable, **kwargs):
+    '''FIXME add docs
+    '''
+    # FIXME add kwargs to alter figure details
+    # create figure groupings (all conditions that will go on the same figure)
+    fig={}
+    ax={}
+    n_subgroups={}
+    n_traces={}
+    xlim={}
+    ylim={}
+    # iterate over figures
+    for figure_key, figure_subgroups in figure_params.iteritems():
+        # params kw specifies figure level kwargs
+        if figure_key!='params':
+            # create figure, passing params as **kwargs
+            fig[figure_key], ax[figure_key] = plt.subplots()
+            # number of subgroup in figure
+            n_subgroups[figure_key] = len(figure_subgroups.keys()) 
+            n_traces[figure_key]={}
+            # iterate over subgroups of traces
+            for subgroup_key, traces in figure_subgroups.iteritems():
 
+                if subgroup_key!='params':
+                    # FIXME distribute subgroup padrameters to each trace in the subgroup, with priority to trace parameters
+                    n_traces[figure_key][subgroup_key]=len(traces.keys())
+                    # get trial id's
+                    trace_key_temp = sorted(traces.keys())
+                    trace_key_temp = [temp for temp in trace_key_temp if temp!='params'][0]
+                    print traces.keys()
+                    if'plot_individual_trace' in traces['params'] and len(traces['params']['plot_individual_trace'])>0:
+                        trial_ids=[]
+                        for iloc in traces['params']['plot_individual_trace']:
+                            trial_ids.append(df_sorted[trace_key_temp].trial_id.iloc[iloc])
+                    
+
+                    # iterate over individual traces
+                    for trace_key, params in traces.iteritems():
+                        if trace_key!='params':
+                            # get data and stats
+                            print df_sorted.keys()
+                            trace_series = df_sorted[trace_key].data
+                            print subgroup_key, trace_key, trace_series
+                            data_array = _2array(trace_series, remove_nans=True, remove_nans_axis=1)#*1000
+                            # get stats
+                            # mean across slices
+                            data_mean = np.mean(data_array, axis=0)
+                            #std across slices
+                            data_std = np.std(data_array, axis=0)
+                            # sem across slices
+                            data_sem = stats.sem(data_array, axis=0)
+                            # time vector
+                            t = np.arange(len(data_mean))/10.
+                            if 'plot_mean' in traces['params'] and traces['params']['plot_mean']:
+                                # line trace with shaded error
+                                #______________________________
+                                if 'shade_error' in params and params['shade_error']:
+
+                                    ax[figure_key].plot(t, data_mean, color=params['color'], linewidth=params['linewidth'])
+                                    plt.fill_between(t, data_mean-data_sem, data_mean+data_sem, **params['e_params'])
+                            # FIXME not working for weights
+                            elif'plot_individual_trace' in traces['params'] and len(traces['params']['plot_individual_trace'])>0:
+                                for trial_id in trial_ids:
+                                    print 'trial_id', trial_id
+                                    trace_data = df_sorted[trace_key][df_sorted[trace_key].trial_id==trial_id].data
+                                    print df_sorted[trace_key][df_sorted[trace_key].trial_id==trial_id]
+
+                                    trace_data = _2array(trace_data)#*1000
+                                    print trace_key,trace_data
+                                    t = np.arange(len(trace_data))/10.
+                                    ax[figure_key].plot(t, trace_data, color=params['color'], linewidth=params['linewidth'])
+
+            # get x and y limits based data
+            xlim[figure_key] = ax[figure_key].get_xlim()
+            ylim[figure_key] = ax[figure_key].get_ylim()
+    
+    # get ylim and xlim across all figures
+    xlims=[]
+    ylims=[]
+    for figure_key in ylim:
+        xlims.append(xlim[figure_key])
+        ylims.append(ylim[figure_key])
+    xlim_all = [min([temp[0] for temp in xlims]), max([temp[1] for temp in xlims])]
+    ylim_all = [min([temp[0] for temp in ylims]), max([temp[1] for temp in ylims])]
+
+    # set common ylim across all figures
+    for figure_key, axes in ax.iteritems():
+        if 'ylim_all' in figure_params['params'] and figure_params['params']['ylim_all']:
+            print 'setting ylim to be the same across all figures'
+            if 'ylim' in figure_params['params']:
+                ax[figure_key].set_ylim(figure_params['params']['ylim'])
+            else:
+                ax[figure_key].set_ylim(ylim_all)
+        if 'xlim_all' in figure_params['params'] and figure_params['params']['xlim_all']:
+            if 'xlim' in figure_params['params']:
+                ax[figure_key].set_xlim(figure_params['params']['xlim'])
+            else:
+                ax[figure_key].set_xlim(xlim_all)
+
+        # format figure
+        ax[figure_key].spines['right'].set_visible(False)
+        ax[figure_key].spines['top'].set_visible(False)
+        ax[figure_key].spines['left'].set_linewidth(5)
+        ax[figure_key].spines['bottom'].set_linewidth(5)
+        ax[figure_key].xaxis.set_ticks_position('bottom')
+        ax[figure_key].yaxis.set_ticks_position('left')
+        ax[figure_key].set_xlabel(figure_params['params']['xlabel'], fontsize=25, fontweight='heavy')
+        ax[figure_key].set_ylabel(figure_params['params']['ylabel'], fontsize=25, fontweight='heavy')
+        for temp in ax[figure_key].get_xticklabels():
+            temp.set_fontweight('heavy')
+            temp.set_fontsize(15)
+        for temp in ax[figure_key].get_yticklabels():
+            temp.set_fontweight('heavy')
+            temp.set_fontsize(15)
+        # print xticks, xticklabels
+        # ax[figure_key].set_xticks(xticks)
+        # ax[figure_key].set_xticklabels(xticklabels, fontsize=20, fontweight='heavy')
+        # ax[figure_key].tick_params(axis='both', labelsize=20, )
+        # xticks = figure_params['xticks'] #np.arange(0,81, 20)
+        # ytickmax = ax[figure_key].get_ylim()[1]
+        # ytickmin = ax[figure_key].get_ylim()[0]
+        # yticks = figure_params['yticks']#np.round(np.arange(0,ytickmax, 10), decimals=0).astype(int)
+        # ax[figure_key].set_xticks(xticks)
+        # ax[figure_key].set_xticklabels(xticks, fontsize=20, fontweight='heavy')
+        # ax[figure_key].set_yticks(yticks)
+        # ax[figure_key].set_yticklabels(yticks, fontsize=20, fontweight='heavy')
+        
+        # ax[figure_key].set_ylim(ylim[figure_key])
+        # ax[figure_key].set_xlim(xlim)
+        plt.figure(fig[figure_key].number)
+        plt.tight_layout()
+        plt.show(block=False)
+
+    return fig, axes
 
 
 

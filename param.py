@@ -43,7 +43,7 @@ class Clopath2010:
             't_reset':0.5*ms, # time constant for resetting voltage after holding spike (should be equal to dt)
             'hold_spike':1,
 
-            'rec_variables': ['u','A_LTD_homeo', 'I_nmda', 'I_gaba'],
+            'rec_variables': ['u',],
             'rec_indices': True,
 
             # synapse parameters
@@ -71,7 +71,7 @@ class Clopath2010:
 
             # clopath
             #'''''''''''''''''''''''''
-            'v_target' : 100*mV*mV,
+            'v_target' : 60*mV*mV,
 
             # visual cortex parameters from clopath 2010 table 1b
             'A_LTD' : 14E-5,#50*100E-5,
@@ -136,7 +136,7 @@ class Clopath2010:
 
             # clopath
             #'''''''''''''''''''''''''
-            'v_target' : 100*mV*mV,
+            'v_target' : 60*mV*mV,
             # visual cortex parameters from clopath 2010 table 1b
             'A_LTD' : 14E-5,#50*100E-5,
             'A_LTP' : 8E-5/ms,#50*40E-5/ms,
@@ -153,7 +153,10 @@ class Clopath2010:
             # connections
             #'''''''''''''''''''''''''''
             'connect_condition':'i==1',
-            'rec_variables': ['w_clopath', 'x_trace', ],
+            'connect_i':None,
+            'connect_j':None,
+            'connect_p':None,
+            'rec_variables': ['w_clopath', ],
             'rec_indices': True,
         }
 
@@ -320,6 +323,9 @@ class Default:
             # connections
             #'''''''''''''''''''''''''''
             'connect_condition':'i==1',
+            'connect_i':None,
+            'connect_j':None,
+            'connect_p':None,
             'rec_variables': ['w_clopath', 'x_trace', ],
             'rec_indices': True,
         }
@@ -649,6 +655,7 @@ class Param:
 #============================================================================
 # design weight matrix
 #''''''''''''''''''''''
+# FIXME BROADCAST WEIGHT ARRAY TO CORRECT SHAPE
 def _weight_matrix_randn(Npre, Npost, w_mean, w_std,):
     ''' generate random weight matrix (pre x post) from gaussian distribution
     '''
@@ -676,6 +683,12 @@ def _weight_matrix_uniform(Npre, Npost, w):
     else:
         w_matrix = []
     return w_matrix
+
+def _weight_array_uniform(Nsyn, w):
+    '''
+    '''
+    w_array = w*np.ones(Nsyn)
+    return w_array
 
 def _broadcast_weight_matrix(w_matrix, i, j):
     '''

@@ -36,6 +36,117 @@ def _plot_mean(df, variable, group='1'):
     # plt.plot(np.array(gf.data[gf.field_mag>0].tolist()).squeeze().T, color='red')
     plt.show(block=False)
 
+def _plot_bar(df_sorted, figure_params, variable, group_space=1, bar_width=1, bar_spacing=1):
+    '''
+    '''
+    # print 'look here:',figure_params.keys()
+    fig={}
+    ax={}
+    n_subgroups={}
+    n_traces={}
+    xlim={}
+    ylim={}
+    for figure_key, figure_subgroups in figure_params.iteritems():
+        if figure_key!='params':
+            fig[figure_key], ax[figure_key] = plt.subplots()
+            n_subgroups[figure_key] = len(figure_subgroups.keys()) 
+            n_traces[figure_key]={}
+            locations = []
+            heights=[]
+            colors=[]
+            fig_args=[]
+            xticks=[]
+            xticklabels=[]
+            cnt=bar_spacing
+            for subgroup_key, traces in figure_subgroups.iteritems():
+                if subgroup_key!='params':
+                    n_traces[figure_key][subgroup_key]=len(traces.keys())
+                    cnt+=group_space
+                    for trace_key, params in traces.iteritems():
+                        if trace_key!='params':
+                            trace_args={}
+                            cnt+=bar_spacing
+                            locations.append(cnt)
+                            xticks.append(cnt)
+                            xticklabels.append(params['label'])
+
+                            # get data and stats
+                            trace_series = df_sorted[trace_key][variable]
+                            data_array = (_2array(trace_series, remove_nans=True, remove_nans_axis=1)-1)*100.
+                            # get stats
+                            # mean across slices
+                            data_mean = np.mean(data_array, axis=0)
+                            #std across slices
+                            data_std = np.std(data_array, axis=0)
+                            # sem across slices
+                            data_sem = stats.sem(data_array, axis=0)
+
+                            heights.append(data_mean)
+
+                            trace_args['color'] = params['color']
+
+                            fig_args.append(trace_args)
+
+                            colors.append(params['color'])
+
+                            plt.errorbar(cnt, data_mean, data_sem, color=(.5,.5,.5))
+
+            barcontainer = ax[figure_key].bar(locations, heights, width=bar_width, tick_label=xticklabels)
+            xlim[figure_key] = ax[figure_key].get_xlim()
+            ylim[figure_key] = ax[figure_key].get_ylim()
+            # ax[figure_key].set_xticks(xticks, xticklabels,)
+            # barcontainer = ax[figure_key].violinplot(locations, heights, width=bar_width, tick_label=xticklabels)
+            print 'rotations:', figure_key, figure_params[figure_key]['params']
+            ax[figure_key].set_xticklabels(xticklabels, fontsize
+                =20, fontweight='heavy', rotation=figure_params[figure_key]['params']['rotation'])
+            for bar_i, bar in enumerate(barcontainer):
+                bar.set_color(colors[bar_i])
+
+    # get ylim and xlim across all figures
+    xlims=[]
+    ylims=[]
+    for figure_key in ylim:
+        xlims.append(xlim[figure_key])
+        ylims.append(ylim[figure_key])
+    xlim_all = [min([temp[0] for temp in xlims]), max([temp[1] for temp in xlims])]
+    ylim_all = [min([temp[0] for temp in ylims]), max([temp[1] for temp in ylims])]
+
+    xlim={}
+    ylim={}
+    print figure_params.keys()
+    for figure_key, axes in ax.iteritems():
+        if 'ylim_all' in figure_params['params'] and figure_params['params']['ylim_all']:
+            print 'setting ylim'
+            ax[figure_key].set_ylim(ylim_all)
+            ax[figure_key].set_xlim(xlim_all)
+
+        
+        # format figure
+        ax[figure_key].spines['right'].set_visible(False)
+        ax[figure_key].spines['top'].set_visible(False)
+        ax[figure_key].spines['left'].set_linewidth(5)
+        ax[figure_key].spines['bottom'].set_linewidth(5)
+        ax[figure_key].xaxis.set_ticks_position('bottom')
+        ax[figure_key].yaxis.set_ticks_position('left')
+        # ax[figure_key].set_xlabel('Time (min)', fontsize=25, fontweight='heavy')
+        ax[figure_key].set_ylabel('% LTP', fontsize=25, fontweight='heavy')
+        xticks = np.arange(0,81, 20)
+        ytickmax = ax[figure_key].get_ylim()[1]
+        ytickmin = ax[figure_key].get_ylim()[0]
+        yticks = np.round(np.arange(0,ytickmax, 10), decimals=0).astype(int)
+        # ax[figure_key].set_xticks(xticks)
+        # ax[figure_key].set_xticklabels(xticks, fontsize=20, fontweight='heavy')
+        ax[figure_key].set_yticks(yticks)
+        ax[figure_key].set_yticklabels(yticks, fontsize=20, fontweight='heavy')
+        
+        # ax[figure_key].set_ylim(ylim[figure_key])
+        # ax[figure_key].set_xlim(xlim)
+        plt.figure(fig[figure_key].number)
+        plt.tight_layout()
+
+    plt.show(block=False)
+
+    return fig, ax
 
 class Plot:
     '''

@@ -4,6 +4,23 @@ import pandas as pd
 from scipy import stats
 import copy
 
+def _build_spike_rec(brian_objects, keys, P):
+    '''
+    '''
+    # zipped_objects = zip(keys, brian_objects)
+    rec={}
+    for i, key in enumerate(keys):
+        rec[key] = {}
+        for group_key, group in brian_objects[i].iteritems():
+            brian_object = group
+
+            rec[key][group_key]
+
+            # remove rec variables that are not in the current object
+            # rec_variables = list(set(P.__dict__[key][group_key]['rec_variables']).intersection(set(brian_object.variables.keys())))
+            
+            rec[key][group_key] = SpikeMonitor(brian_object)
+    return rec
 
 def _build_state_rec(brian_objects, keys, P):
     '''
@@ -14,7 +31,11 @@ def _build_state_rec(brian_objects, keys, P):
         rec[key] = {}
         for group_key, group in brian_objects[i].iteritems():
             brian_object = group
-            rec[key][group_key] = StateMonitor(brian_object, P.__dict__[key][group_key]['rec_variables'], record=P.__dict__[key][group_key]['rec_indices'])
+
+            # remove rec variables that are not in the current object
+            rec_variables = list(set(P.__dict__[key][group_key]['rec_variables']).intersection(set(brian_object.variables.keys())))
+            
+            rec[key][group_key] = StateMonitor(brian_object, rec_variables, record=P.__dict__[key][group_key]['rec_indices'])
     return rec
 
     # rec = {}
@@ -37,6 +58,7 @@ def _set_initial_conditions(brian_object, init_dic):
         for group_key, group in brian_object.iteritems():
             for param, val in init_dic[group_key].iteritems():
                 if hasattr(brian_object[group_key], param):
+                    print group_key, getattr(brian_object[group_key], param).shape
                     setattr(brian_object[group_key], param, val)
 
     else:

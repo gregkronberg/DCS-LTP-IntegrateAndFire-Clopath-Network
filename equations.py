@@ -105,23 +105,28 @@ class AdexBonoClopath:
             '''
 
         self.syn_gaba = '''
-            w_gaba:1
-            
-        '''
+                w_gaba:1
+                '''
 
+        # inhibition without presynaptic adaptation (multiply each term by A to include adaptation)
         self.syn_gaba_pre = '''
-            g_gaba += int(update_gaba_online)*w_vogels*g_max_gaba*A + int(1-update_gaba_online)*w_gaba*g_max_ampa*A 
+            g_gaba += int(update_gaba_online)*w_vogels*g_max_gaba + int(1-update_gaba_online)*w_gaba*g_max_ampa 
             
-        '''
+                '''
 
         self.syn_ampa_pre = '''
             g_ampa += int(update_ampa_online)*w_clopath*g_max_ampa*A + int(1-update_ampa_online)*w_ampa*g_max_ampa*A 
+            '''
+        self.syn_ampa_pre_nonadapt = '''
+            g_ampa += int(update_ampa_online)*w_clopath*g_max_ampa + int(1-update_ampa_online)*w_ampa*g_max_ampa 
             '''
 
         self.syn_nmda_pre = '''
             g_nmda += int(update_nmda_online)*w_clopath*g_max_nmda*A + int(1-update_nmda_online)*w_nmda*g_max_nmda*A 
             '''
-        
+        self.syn_nmda_pre_nonadapt = '''
+            g_nmda += int(update_nmda_online)*w_clopath*g_max_nmda + int(1-update_nmda_online)*w_nmda*g_max_nmda
+            '''
         # nmda synapses
         #''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
         self.syn_nmda = '''
@@ -195,9 +200,11 @@ class AdexBonoClopath:
 
         self.synapse_e = _add_eq(self.syn_ampa, self.syn_nmda, self.syn_stp, self.syn_clopath)
 
-        self.synapse_i = _add_eq(self.syn_gaba)
+        self.synapse_i = _add_eq(self.syn_gaba, self.syn_vogels)
 
         self.synapse_e_pre = _add_eq(self.syn_ampa_pre, self.syn_nmda_pre, self.syn_stp_pre, self.syn_clopath_pre)
+
+        self.synapse_e_pre_nonadapt = _add_eq(self.syn_ampa_pre_nonadapt, self.syn_nmda_pre_nonadapt, self.syn_stp_pre, self.syn_clopath_pre)
 
         self.synapse_i_pre = _add_eq(self.syn_gaba_pre, self.syn_vogels_pre)
 

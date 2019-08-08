@@ -147,7 +147,7 @@ def _rec2df_multi(rec, P):
 
     return df
 
-def _rec2df(rec, P):
+def _rec2df(rec, P, include_P=True):
     ''' convert recording objects from brian into pandas dataframe
 
     ==Args==
@@ -218,8 +218,9 @@ def _rec2df(rec, P):
                 # unique trial identifier
                 current_dict['trial_id']=P.simulation['trial_id'],
 
-                # parameter dictionary objects
-                current_dict['P']=P,
+                if include_P:
+                    # parameter dictionary objects
+                    current_dict['P']=P,
 
                 # electric field magnitude
                 current_dict['field_mag']=P.simulation['field_mag'],
@@ -328,6 +329,7 @@ def _build_ltp_final(row):
     '''
     '''
     ltp_final = row['data'][:,-1]/row['data'][:,0]
+    print ltp_final.shape
 
     return ltp_final
 

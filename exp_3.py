@@ -16,7 +16,7 @@ import analysis
 import itertools
 
 # directory and file name to store data
-group_data_directory = 'Data/'+__name__+'/'
+group_data_directory = 'Datatemp/'+__name__+'/'
 group_data_filename = __name__+'_data.pkl'
 
 

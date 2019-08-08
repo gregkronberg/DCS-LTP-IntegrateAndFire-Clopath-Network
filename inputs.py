@@ -51,7 +51,11 @@ def _tbs(p):
 def _poisson(p):
     '''
     '''
-    if 'n_poisson' in p:
-        N = p['n_poisson']
+    print p
+    if 'N' in p:
+        N = p['N']
+    else:
+        N=1
 
-    input_group = PoissonGroup(N, p['poisson_rate'])
+    input_group = PoissonGroup(N, p['poisson_rates'], namespace=p)
+    return input_group
